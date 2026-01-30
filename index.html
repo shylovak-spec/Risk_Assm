@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Журнал оцінки ризиків</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Roboto, sans-serif;
+}
+
+body {
+    background: #000;
+    color: #fff;
+}
+
+section {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    padding: 14px 26px;
+    font-size: 20px;
+    border-radius: 10px;
+}
+
+/* --- ТИТУЛЬНА --- */
+#title-screen h1 {
+    font-size: 32px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#start-btn {
+    background: #fff;
+    color: #000;
+}
+
+/* --- КАРТКИ --- */
+#cards-screen {
+    background: #fff;
+    color: #000;
+    display: none;
+}
+
+.cards-grid {
+    width: 100%;
+    max-width: 500px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.card {
+    width: 100%;
+    min-height: 180px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 14px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: #1a1a1a;
+    color: #fff;
+    border: 3px solid;
+    font-size: 16px;
+    line-height: 1.3;
+}
+
+.card-face h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+    border-bottom: 2px solid #fff;
+    padding-bottom: 5px;
+    width: 100%;
+    text-align: center;
+}
+
+.card-front {
+    border-color: #E74C3C;
+    transform: rotateY(0deg);
+}
+
+.card-back {
+    border-color: #4fa36f;
+    transform: rotateY(180deg);
+}
+
+#play-btn {
+    display: none;
+    margin-top: 30px;
+    background: #000;
+    color: #fff;
+    border: 2px solid #000;
+}
+</style>
+</head>
+
+<body>
+
+<section id="title-screen">
+    <h1>Журнал оцінки ризиків для дільниці тестування</h1>
+    <button id="start-btn">Старт</button>
+</section>
+
+<section id="cards-screen">
+    <h2 style="margin-bottom: 7px; text-align: center;">
+        Ризик/Контроль<br>(тиць на картку)
+    </h2>
+
+    <div class="cards-grid" id="cards-container"></div>
+
+    <a href="pingpong.html">
+        <button id="play-btn">Пограєм?</button>
+    </a>
+</section>
+
+<script>
+const title = document.getElementById("title-screen");
+const cards = document.getElementById("cards-screen");
+const startBtn = document.getElementById("start-btn");
+const playBtn = document.getElementById("play-btn");
+
+startBtn.onclick = () => {
+    title.style.display = "none";
+    cards.style.display = "flex";
+};
+
+const cardData = [
+    {
+        title: "Механічні небезпеки",
+        front: "Порізи або проколи рук гострими виводами при ручному монтажі компонентів в отвори та їх подальшій формовці..",
+        back: "Комплексне навчання з Інструкцій 'Підготовка комплектуючих до монтажу' та 'Загальні вимоги до ручної пайки'; навчання з ІОП №29 для монтажника РЕА; щоденні перевірки робочих місць за чек-листом LPA."
+    },
+    {
+        title: "Механічні небезпеки",
+        front: "Травмування через аварійне від’єднання шланга стисненого повітря (AR-110). Потрапляння часток в очі у продувочній камері.",
+        back: "Комплексне навчання з Інструкцій 'Підготовка комплектуючих до монтажу' та 'Загальні вимоги до ручної пайки'; навчання з ІОП №29 для монтажника РЕА; щоденні перевірки робочих місць за чек-листом LPA."
+    },
+    {
+        title: "Механічні небезпеки",
+        front: "Падіння, ковзання або спотикання на слизькій підлозі після проведення вологого прибирання.",
+        back: "Дотримання графіка прибирання, використання попереджувальних табличок."
+    },
+    {
+        title: "Електричні небезпеки",
+        front: "Ураження електричним струмом під час роботи з ТБ через дотик до струмопровідних частин під напругою або несправність систем захисту обладнання.",
+        back: "Навчання за інструкцією №3 для присвоєння I групи з електробезпеки (не рідше 1 разу на 3 місяці) та обов'язкове щорічне проходження навчання з електробезпеки.Обмежений доступ до електричної частини ТБ. Попереджувальні знаки."
+    },
+    {
+        title: "Небезпечні речовини",
+        front: "Хімічне подразнення шкіри (H315), алергічна реакція шкіри (H317), подразнення дихальних шляхів (Н335) серйозне подразнення очей (H319) під час ручного видалення флюсу очисником Kontakt PCC.",
+        back: "Постійно працююча витяжна система. Наявність та контроль використання засобів індивідуального захисту. Навчання з безпечного поводження з хімічними речовинами."
+    },
+    {
+        title: "Пожежі/Вибухи",
+        front: "Займання (вибух) тари з хімречовинами при зберіганні біля нагрівачів або спалахування їх парів при потраплянні на гарячі поверхні.",
+        back: "Зберігання та використання хімічних речовин згідно з паспортом безпеки. Наявність первинних засобів пожежогасіння. Регулярні практичні навчання користування вогнегасниками."
+    },
+    {
+        title: "Випромінення",
+        front: "Пошкодження кришталика та сітківки ока працівника HardTest через вплив лазерного або УФ/ІЧ випромінювання під час роботи на тест-блоці з фокусування.",
+        back: "Періодичні навчання з ІОП №9 При виконанні монтажу радіоелектронної апаратури паяльником. Попереджувальні знаки на корпусі обладнання."
+    },
+    {
+        title: "Клімат робочого місця",
+        front: "Знижена чи підвищена температура, знижена чи підвищена вологість повітря, протяги.",
+        back: "Контроль температури та вологості. Облаштування проємів загороджувальними засобами."
+    },
+    {
+        title: "Освітлення",
+        front: "Надмірне зорове навантаження через невідповідне освітлення: підвищена втомлюваність, мігрені, дискомфорт та зниження працездатності.",
+        back: "Регулярні медичні огляди. Наявність регульованого місцевого освітлення на кожному робочому місці."
+    },
+    {
+        title: "Ергономіка",
+        front: "Перекидання візків з платами під час руху та ризик юридичних штрафів через роботу з ліфтом персоналу без посвідчень ліфтера.",
+        back: "Щорічне навчання за професією «ліфтер» та контроль наявності діючих посвідчень. Щоденні візуальні перевірки візків згідно чек-листу."
+    },
+    {
+        title: "Ергономіка",
+        front: "Негативний вплив тривалої сидячої роботи та роботи за ПК: зниження метаболізму, ризик розвитку хвороб серця, діабету та розладів опорно-рухового апарату.",
+        back: "Зміна видів діяльності для уникнення монотонних операцій протягом зміни. Режим відпочинку. Щорічний обов’язковий медичний огляд працівників."
+    }
+];
+const container = document.getElementById("cards-container");
+let flippedCount = 0;
+
+cardData.forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.flippedOnce = "false";
+
+    card.innerHTML = `
+        <div class="card-inner">
+            <div class="card-face card-front">
+                <h3>${c.title}</h3>
+                <p>${c.front}</p>
+            </div>
+            <div class="card-face card-back">
+                <h3>Заходи контролю</h3>
+                <p>${c.back}</p>
+            </div>
+        </div>
+    `;
+
+    card.onclick = () => {
+        const wasFlipped = card.classList.contains("flipped");
+        card.classList.toggle("flipped");
+
+        if (!wasFlipped && card.dataset.flippedOnce === "false") {
+            card.dataset.flippedOnce = "true";
+            flippedCount++;
+        }
+
+        if (flippedCount === cardData.length) {
+            playBtn.style.display = "block";
+        }
+    };
+
+    container.appendChild(card);
+});
+</script>
+
+</body>
+</html>
