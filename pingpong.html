@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Теніс</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:Roboto, sans-serif; }
+
+body {
+    background:#000;
+    height:100vh;
+    overflow:hidden;
+    position:relative;
+    touch-action:none;
+}
+
+#ui {
+    width:100%;
+    height:60px;
+    background:#fff;
+    color:#000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    font-size:18px;
+    font-weight:500;
+}
+
+#pauseBtn {
+    background:#000;
+    color:#fff;
+    border:2px solid #000;
+    padding:8px 16px;
+    border-radius:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+canvas {
+    display:block;
+    background:#000;
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+    <div>Рахунок: <span id="score">0</span></div>
+    <div>Швидкість: <span id="speed">1.0x</span></div>
+    <button id="pauseBtn">Пауза</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/*************** НАЛАШТУВАННЯ ***************/
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let W = window.innerWidth;
+let H = window.innerHeight - 60;
+
+canvas.width = W;
+canvas.height = H;
+
+let ball = { x: W/2, y: H/2, r: 12, vx: 4, vy: -5 };
+let paddle = { w: 140, h: 14, x: W/2 - 70, y: H - 30 };
+let targetX = paddle.x;
+
+let isRunning = false;
+let paused = false;
+let score = 0;
+
+const MAX_SPEED = 16;
+const SPEED_GROWTH = 0.10;
+
+let explosionParticles = [];
+let exploding = false;
+
+/*************** УПРАВЛІННЯ ***************/
+document.addEventListener("mousemove", e => {
+    targetX = e.clientX - paddle.w / 2;
+});
+
+canvas.addEventListener("touchmove", e => {
+    targetX = e.touches[0].clientX - paddle.w / 2;
+});
+
+canvas.addEventListener("click", startGame);
+canvas.addEventListener("touchstart", startGame);
+
+document.getElementById("pauseBtn").onclick = () => {
+    paused = !paused;
+};
+
+/*************** ЛОГІКА ***************/
+function startGame() {
+    if (!isRunning) {
+        isRunning = true;
+        paused = false;
+    }
+}
+
+function increaseDifficulty() {
+    if (Math.abs(ball.vx) < MAX_SPEED) ball.vx *= (1 + SPEED_GROWTH);
+    if (Math.abs(ball.vy) < MAX_SPEED) ball.vy *= (1 + SPEED_GROWTH);
+    ball.vx += (Math.random() - 0.5) * 1.5;
+
+    document.getElementById("speed").innerText =
+        (Math.abs(ball.vy) / 5).toFixed(1) + "x";
+}
+
+function lose() {
+    exploding = true;
+    createExplosion(ball.x, ball.y);
+
+    setTimeout(() => {
+        window.location.href = "index.html";
+    }, 900);
+}
+
+/*************** ВИБУХ ***************/
+function createExplosion(x, y) {
+    explosionParticles = [];
+    for (let i = 0; i < 25; i++) {
+        explosionParticles.push({
+            x, y,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            life: 1
+        });
+    }
+}
+
+function updateExplosion() {
+    explosionParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.03;
+    });
+    explosionParticles = explosionParticles.filter(p => p.life > 0);
+}
+
+function drawExplosion() {
+    explosionParticles.forEach(p => {
+        ctx.fillStyle = `rgba(255,255,255,${p.life})`;
+        ctx.fillRect(p.x, p.y, 6, 6);
+    });
+}
+
+/*************** ГРА ***************/
+function update() {
+    if (!isRunning || paused || exploding) return;
+
+    paddle.x += (targetX - paddle.x) * 0.2;
+
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+
+    if (ball.x < ball.r || ball.x > W - ball.r) ball.vx *= -1;
+    if (ball.y < ball.r) ball.vy *= -1;
+
+    if (
+        ball.y + ball.r >= paddle.y &&
+        ball.x > paddle.x &&
+        ball.x < paddle.x + paddle.w
+    ) {
+        ball.vy = -Math.abs(ball.vy);
+        let delta = ball.x - (paddle.x + paddle.w / 2);
+        ball.vx = delta * 0.25;
+
+        score++;
+        document.getElementById("score").innerText = score;
+        increaseDifficulty();
+    }
+
+    if (ball.y > H + 30) lose();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    if (!isRunning) {
+        ctx.fillStyle = "#fff";
+        ctx.font = "26px Roboto";
+        ctx.textAlign = "center";
+        ctx.fillText("Натисни, щоб почати", W/2, H/2);
+        return;
+    }
+
+    if (!exploding) {
+        let pulse = Math.sin(Date.now() * 0.01) * 1.5;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.r + pulse, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+
+    if (exploding) {
+        updateExplosion();
+        drawExplosion();
+    }
+
+    if (paused) {
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#fff";
+        ctx.font = "40px Roboto";
+        ctx.textAlign = "center";
+        ctx.fillText("ПАУЗА", W/2, H/2);
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+loop();
+
+/*************** АДАПТИВ ***************/
+window.addEventListener("resize", () => {
+    W = window.innerWidth;
+    H = window.innerHeight - 60;
+    canvas.width = W;
+    canvas.height = H;
+    paddle.y = H - 30;
+});
+</script>
+
+</body>
+</html>
